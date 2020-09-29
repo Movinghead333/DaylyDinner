@@ -113,6 +113,7 @@ public class AppController : MonoBehaviour
     {
         ChangeState(ApplicationState.RECIPE_LIST_VIEW);
         recipes.RemoveAt(selectedListItemID);
+        SaveRecipes();
         Rerender();
     }
 
