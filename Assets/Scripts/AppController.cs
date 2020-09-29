@@ -5,6 +5,16 @@ using System;
 using System.IO;
 using System.Globalization;
 
+public enum ApplicationState
+{
+    RECIPE_LIST_VIEW,
+    ADD_NEW_RECIPE_DIALOG,
+    SHOW_RECIPE_DIALOG,
+    SELECT_LIST_ITEM_TO_EDIT,
+    EDIT_LIST_ITEM,
+    CONFIRM_DELETE_LIST_ITEM,
+}
+
 public class AppController : MonoBehaviour
 {
     #region Singleton
@@ -26,7 +36,8 @@ public class AppController : MonoBehaviour
 
     #region Public_Members
     public GameObject addRecipeDialog;
-    public GameObject cookRecipeDialog;
+    public GameObject showRecipeDialog;
+    public GameObject addRecipeButton;
 
     public static DateTime neverMade = new DateTime(2000, 1, 1);
     #endregion
@@ -37,6 +48,9 @@ public class AppController : MonoBehaviour
     private string dataPath;
 
     private int selectedListItemID = 0;
+
+    private ApplicationState applicationState =
+        ApplicationState.RECIPE_LIST_VIEW;
     #endregion
 
     // Start is called before the first frame update
@@ -46,11 +60,12 @@ public class AppController : MonoBehaviour
         dataPath = Application.persistentDataPath + "/data.txt";
 
         // write dummy recipe data to data.txt
-        WriteDummyData();
+        //WriteDummyData();
 
-        
+        // laod existing recipes
         LoadRecipes();
 
+        // rerender loaded recipes
         Rerender();
     }
 
@@ -59,12 +74,12 @@ public class AppController : MonoBehaviour
        add a new recipe */
     public void OnAddNewRecipe()
     {
-        addRecipeDialog.SetActive(true);
+        ChangeState(ApplicationState.ADD_NEW_RECIPE_DIALOG);
     }
 
     public void OnNewRecipeConfirmed(Recipe newRecipe)
     {
-        addRecipeDialog.SetActive(false);
+        if (!ChangeState(ApplicationState.RECIPE_LIST_VIEW)) return;
         recipes.Add(newRecipe);
         recipes.Sort();
         Rerender();
@@ -73,41 +88,84 @@ public class AppController : MonoBehaviour
 
     public void OnNewRecipeCanceled()
     {
-        addRecipeDialog.SetActive(false);
+        ChangeState(ApplicationState.RECIPE_LIST_VIEW);
+    }
+
+    public void OnRecipeListItemSelected(int id)
+    {
+        if (!ChangeState(ApplicationState.SHOW_RECIPE_DIALOG)) return;
+        selectedListItemID = id;
+        string recipeName = recipes[selectedListItemID].name;
+        ViewRecipeDialogUIC.instance.ChangeRecipeName(recipeName);
     }
 
     public void OnCookRecipeConfirmed()
     {
+        ChangeState(ApplicationState.RECIPE_LIST_VIEW);
         Debug.Log("recipe cooked");
         recipes[selectedListItemID].lastPrepared = DateTime.Today;
         SaveRecipes();
         Rerender();
         Debug.Log(recipes[selectedListItemID].GetDate());
-        cookRecipeDialog.SetActive(false);
     }
 
-    public void OnCookRecipeCanceled()
+    public void OnDeleteRecipeConfirmed()
     {
-        cookRecipeDialog.SetActive(false);
+        ChangeState(ApplicationState.RECIPE_LIST_VIEW);
+        recipes.RemoveAt(selectedListItemID);
+        Rerender();
     }
 
-    public void OnRecipeListItemSelected(int id)
+    public void OnShowRecipeDialogClosed()
     {
-        cookRecipeDialog.SetActive(true);
-        selectedListItemID = id;
-        string title = $"Wurde heute das Gericht \"{recipes[id].name}\" gekocht?";
-        CookRecipeDialogUIC.instance.SetDialogTitle(title);
-    }
-
-    public void OnEnterDeletionMode()
-    {
-
+        ChangeState(ApplicationState.RECIPE_LIST_VIEW);
     }
     #endregion
 
     private void Rerender()
     {
         RecipeListUIC.instance.RerenderList(recipes);
+    }
+
+    private bool ChangeState(ApplicationState newState)
+    {
+        bool changeState = false;
+        switch (newState)
+        {
+            case ApplicationState.RECIPE_LIST_VIEW:
+                addRecipeDialog.SetActive(false);
+                showRecipeDialog.SetActive(false);
+                addRecipeButton.SetActive(true);
+                changeState = true;
+                break;
+            case ApplicationState.ADD_NEW_RECIPE_DIALOG:
+                if (applicationState == ApplicationState.RECIPE_LIST_VIEW)
+                {
+                    addRecipeDialog.SetActive(true);
+                    addRecipeButton.SetActive(false);
+                    changeState = true;
+                }
+                break;
+            case ApplicationState.SHOW_RECIPE_DIALOG:
+                if (applicationState == ApplicationState.RECIPE_LIST_VIEW)
+                {
+                    showRecipeDialog.SetActive(true);
+                    addRecipeButton.SetActive(false);
+                    changeState = true;
+                }
+                break;
+            case ApplicationState.SELECT_LIST_ITEM_TO_EDIT:
+                break;
+            case ApplicationState.EDIT_LIST_ITEM:
+                break;
+            case ApplicationState.CONFIRM_DELETE_LIST_ITEM:
+                break;
+        }
+        if (changeState)
+        {
+            applicationState = newState;
+        }
+        return changeState;
     }
 
     #region Data_Loading_And_Saving
@@ -171,6 +229,7 @@ public class AppController : MonoBehaviour
             string[] lines = {
                 "Zuccini-creme-suppe", "29.09.2020",
                 "Paprika Geschnetzeltes", "29.09.2020",
+                "Bratwurst", "29.09.2020",
                 "Rippchen", "28.09.2020",
                 "Ei mit Schinken", "28.09.2020"};
 
