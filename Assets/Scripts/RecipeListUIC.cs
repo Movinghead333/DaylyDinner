@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using TMPro;
 
 public class RecipeListUIC : MonoBehaviour
 {
@@ -24,10 +25,36 @@ public class RecipeListUIC : MonoBehaviour
     #endregion
 
     public GameObject contentPanel;
+    public TMP_InputField searchField;
 
     private List<GameObject> listItems = new List<GameObject>();
 
     private GameObject itemPrototype;
+
+    public void FilterBySearchInput()
+    {
+        string searchInput = searchField.text;
+        Debug.Log("searchinput:" + searchInput);
+        Debug.Log("Search changed");
+        if (searchInput == "")
+        {
+            Debug.Log("clearing");
+            foreach (GameObject item in listItems)
+            {
+                item.SetActive(true);
+            }
+            return;
+        }
+
+        searchInput = searchInput.ToLower();
+        foreach (GameObject item in listItems)
+        {
+            Debug.Log("checking item");
+            string recipeName =
+                item.GetComponent<RecipeListItemUIC>().getRecipeName().ToLower();
+            item.SetActive(recipeName.Contains(searchInput));
+        }
+    }
 
     public void AddRecipeItem(Recipe recipe, int id)
     {
@@ -84,5 +111,7 @@ public class RecipeListUIC : MonoBehaviour
         {
             AddRecipeItem(recipes[i], i);
         }
+
+        FilterBySearchInput();
     }
 }

@@ -16,6 +16,8 @@ public class AddNewRecipeDialogUIC : MonoBehaviour
 
         Recipe recipe = new Recipe(recipeName, new DateTime(2000,1,1));
 
+        recipeNameInput.text = "";
+
         AppController.instance.OnNewRecipeConfirmed(recipe);
     }
 

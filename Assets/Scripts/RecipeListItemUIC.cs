@@ -16,6 +16,11 @@ public class RecipeListItemUIC : MonoBehaviour
         this.id = id;
     }
 
+    public string getRecipeName()
+    {
+        return recipeNameTextMesh.text;
+    }
+
     public void OnListItemClicked()
     {
         AppController.instance.OnRecipeListItemSelected(id);

@@ -10,9 +10,6 @@ public enum ApplicationState
     RECIPE_LIST_VIEW,
     ADD_NEW_RECIPE_DIALOG,
     SHOW_RECIPE_DIALOG,
-    SELECT_LIST_ITEM_TO_EDIT,
-    EDIT_LIST_ITEM,
-    CONFIRM_DELETE_LIST_ITEM,
 }
 
 public class AppController : MonoBehaviour
@@ -54,7 +51,7 @@ public class AppController : MonoBehaviour
     #endregion
 
     // Start is called before the first frame update
-    void Start()
+    public void Start()
     {
         // setup up dataPath for loading and storing recipes
         dataPath = Application.persistentDataPath + "/data.txt";
@@ -67,6 +64,41 @@ public class AppController : MonoBehaviour
 
         // rerender loaded recipes
         Rerender();
+    }
+
+    public void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            switch (applicationState)
+            {
+                case ApplicationState.RECIPE_LIST_VIEW:
+                    // minimize the app when pressing back on main screen
+#if UNITY_ANDROID && !UNITY_EDITOR
+                    //AndroidJavaObject mainActivity =
+                    //    new AndroidJavaClass("com.unity3d.player.UnityPlayer").
+                    //        GetStatic<AndroidJavaObject>("currentActivity");
+                    //mainActivity.Call<bool>("moveTaskToBack", true);
+#endif
+
+                    Application.Quit(); // do not exit the application completely
+                    break;
+                case ApplicationState.ADD_NEW_RECIPE_DIALOG:
+                    ChangeState(ApplicationState.RECIPE_LIST_VIEW);
+                    break;
+                case ApplicationState.SHOW_RECIPE_DIALOG:
+                    ChangeState(ApplicationState.RECIPE_LIST_VIEW);
+                    break;
+            }
+
+            // if there has been an open Menu it is now closed so we can set
+            // the UI state to NO_MENU and show the Main Menu again
+            //if (currentUIState != UIState.NO_MENU)
+            //{
+            //    currentUIState = UIState.NO_MENU;
+            //    onScreenMenuButtons.SetActive(true);
+            //}
+        }
     }
 
     #region UI_Event_Callbacks
@@ -154,12 +186,6 @@ public class AppController : MonoBehaviour
                     addRecipeButton.SetActive(false);
                     changeState = true;
                 }
-                break;
-            case ApplicationState.SELECT_LIST_ITEM_TO_EDIT:
-                break;
-            case ApplicationState.EDIT_LIST_ITEM:
-                break;
-            case ApplicationState.CONFIRM_DELETE_LIST_ITEM:
                 break;
         }
         if (changeState)
