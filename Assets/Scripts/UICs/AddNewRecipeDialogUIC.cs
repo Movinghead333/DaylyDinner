@@ -23,6 +23,7 @@ public class AddNewRecipeDialogUIC : MonoBehaviour
 
     public void OnDialogCanceledButtonClicked()
     {
+        recipeNameInput.text = "";
         AppController.instance.OnNewRecipeCanceled();
     }
 }
