@@ -38,7 +38,6 @@ public class RecipeListUIC : MonoBehaviour
         Debug.Log("Search changed");
         if (searchInput == "")
         {
-            Debug.Log("clearing");
             foreach (GameObject item in listItems)
             {
                 item.SetActive(true);
@@ -109,7 +108,7 @@ public class RecipeListUIC : MonoBehaviour
         // reinstantiate list items
         for (int i = 0; i < recipes.Count; i++)
         {
-            AddRecipeItem(recipes[i], i);
+            AddRecipeItem(recipes[i], recipes[i].uniqueID);
         }
 
         FilterBySearchInput();

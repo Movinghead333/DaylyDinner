@@ -31,7 +31,7 @@ public class ViewRecipeDialogUIC : MonoBehaviour
 
     public void OnChangeRecipeButtonClicked()
     {
-
+        AppController.instance.OnViewRecipeDialogChangeRecipe();
     }
 
     public void OnDeleteRecipeButtonClicked()
@@ -41,7 +41,7 @@ public class ViewRecipeDialogUIC : MonoBehaviour
 
     public void OnCloseDialogButtonClicked()
     {
-        AppController.instance.OnShowRecipeDialogClosed();
+        AppController.instance.OnViewRecipeDialogClosed();
     }
 
     public void ChangeRecipeName(string newRecipeName)

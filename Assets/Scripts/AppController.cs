@@ -9,7 +9,8 @@ public enum ApplicationState
 {
     RECIPE_LIST_VIEW,
     ADD_NEW_RECIPE_DIALOG,
-    SHOW_RECIPE_DIALOG,
+    VIEW_RECIPE_DIALOG,
+    CHANGE_RECIPE_DIALOG,
 }
 
 public class AppController : MonoBehaviour
@@ -34,6 +35,7 @@ public class AppController : MonoBehaviour
     #region Public_Members
     public GameObject addRecipeDialog;
     public GameObject showRecipeDialog;
+    public GameObject changeRecipeDialog;
     public GameObject addRecipeButton;
 
     public static DateTime neverMade = new DateTime(2000, 1, 1);
@@ -44,7 +46,7 @@ public class AppController : MonoBehaviour
 
     private string dataPath;
 
-    private int selectedListItemID = 0;
+    private Recipe selectedRecipe;
 
     private ApplicationState applicationState =
         ApplicationState.RECIPE_LIST_VIEW;
@@ -86,8 +88,11 @@ public class AppController : MonoBehaviour
                 case ApplicationState.ADD_NEW_RECIPE_DIALOG:
                     ChangeState(ApplicationState.RECIPE_LIST_VIEW);
                     break;
-                case ApplicationState.SHOW_RECIPE_DIALOG:
+                case ApplicationState.VIEW_RECIPE_DIALOG:
                     ChangeState(ApplicationState.RECIPE_LIST_VIEW);
+                    break;
+                case ApplicationState.CHANGE_RECIPE_DIALOG:
+                    ChangeState(ApplicationState.VIEW_RECIPE_DIALOG);
                     break;
             }
 
@@ -125,33 +130,78 @@ public class AppController : MonoBehaviour
 
     public void OnRecipeListItemSelected(int id)
     {
-        if (!ChangeState(ApplicationState.SHOW_RECIPE_DIALOG)) return;
-        selectedListItemID = id;
-        string recipeName = recipes[selectedListItemID].name;
+        if (!ChangeState(ApplicationState.VIEW_RECIPE_DIALOG)) return;
+
+        string recipeName = "Rezeptname nicht gefunden";
+
+        for (int i = 0; i < recipes.Count; i++)
+        {
+            if (recipes[i].uniqueID == id)
+            {
+                selectedRecipe = recipes[i];
+                recipeName = selectedRecipe.name;
+                break;
+            }
+        }
         ViewRecipeDialogUIC.instance.ChangeRecipeName(recipeName);
     }
 
     public void OnCookRecipeConfirmed()
     {
         ChangeState(ApplicationState.RECIPE_LIST_VIEW);
-        Debug.Log("recipe cooked");
-        recipes[selectedListItemID].lastPrepared = DateTime.Today;
-        SaveRecipes();
+
+        selectedRecipe.lastPrepared = DateTime.Today;
+
+        recipes.Sort();
         Rerender();
-        Debug.Log(recipes[selectedListItemID].GetDate());
+        SaveRecipes();
+    }
+
+    public void OnViewRecipeDialogChangeRecipe()
+    {
+        ChangeState(ApplicationState.CHANGE_RECIPE_DIALOG);
+        ChangeRecipeDialogUIC.instance.SetupDialog(selectedRecipe);
     }
 
     public void OnDeleteRecipeConfirmed()
     {
         ChangeState(ApplicationState.RECIPE_LIST_VIEW);
-        recipes.RemoveAt(selectedListItemID);
-        SaveRecipes();
+
+        for (int i = 0; i < recipes.Count; i++)
+        {
+            if (recipes[i].uniqueID == selectedRecipe.uniqueID)
+            {
+                recipes.RemoveAt(i);
+                selectedRecipe = null;
+                break;
+            }
+        }
         Rerender();
+        SaveRecipes();
     }
 
-    public void OnShowRecipeDialogClosed()
+    public void OnViewRecipeDialogClosed()
     {
         ChangeState(ApplicationState.RECIPE_LIST_VIEW);
+    }
+
+    public void OnChangeRecipeDialogSave()
+    {
+        selectedRecipe.name = ChangeRecipeDialogUIC.instance.GetRecipeName();
+        selectedRecipe.lastPrepared =
+            ChangeRecipeDialogUIC.instance.GetLastPrepared();
+        ViewRecipeDialogUIC.instance.ChangeRecipeName(selectedRecipe.name);
+
+        recipes.Sort();
+        Rerender();
+        SaveRecipes();
+
+        ChangeState(ApplicationState.VIEW_RECIPE_DIALOG);
+    }
+
+    public void OnChangeRecipeDialogCancel()
+    {
+        ChangeState(ApplicationState.VIEW_RECIPE_DIALOG);
     }
     #endregion
 
@@ -179,11 +229,25 @@ public class AppController : MonoBehaviour
                     changeState = true;
                 }
                 break;
-            case ApplicationState.SHOW_RECIPE_DIALOG:
+            case ApplicationState.VIEW_RECIPE_DIALOG:
                 if (applicationState == ApplicationState.RECIPE_LIST_VIEW)
                 {
                     showRecipeDialog.SetActive(true);
                     addRecipeButton.SetActive(false);
+                    changeState = true;
+                }
+                else if (applicationState == ApplicationState.CHANGE_RECIPE_DIALOG)
+                {
+                    changeRecipeDialog.SetActive(false);
+                    showRecipeDialog.SetActive(true);
+                    changeState = true;
+                }
+                break;
+            case ApplicationState.CHANGE_RECIPE_DIALOG:
+                if (applicationState == ApplicationState.VIEW_RECIPE_DIALOG)
+                {
+                    showRecipeDialog.SetActive(false);
+                    changeRecipeDialog.SetActive(true);
                     changeState = true;
                 }
                 break;
